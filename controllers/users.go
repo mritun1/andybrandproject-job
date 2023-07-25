@@ -17,29 +17,48 @@ import (
 //
 // ---------------------------------------------------------------------
 func Users(c *fiber.Ctx) error {
+	if db.Con == nil {
+		return c.Status(500).SendString("MongoDB collection is nil")
+	}
+
 	query := bson.D{{}}
-	var collect = db.Mg.Db.Collection("users")
-	cursor, err := collect.Find(c.Context(), query)
+	cursor, err := db.Con.Find(c.Context(), query)
 	if err != nil {
-		return c.Status(500).SendString(err.Error())
+		return c.Status(500).SendString("Failed to retrieve users from MongoDB: " + err.Error())
 	}
-	var users []models.Users = make([]models.Users, 0)
-	if err := cursor.All(c.Context(), &users); err != nil {
-		return c.Status(500).SendString(err.Error())
+	defer cursor.Close(c.Context())
+
+	var users []models.Users
+
+	for cursor.Next(c.Context()) {
+		var user models.Users
+		if err := cursor.Decode(&user); err != nil {
+			return c.Status(500).SendString("Failed to decode user from MongoDB: " + err.Error())
+		}
+		users = append(users, user)
 	}
-	//Count Documents num
-	col, _ := collect.CountDocuments(context.Background(), query)
-	var code int = 0
-	if col > 0 {
+
+	if err := cursor.Err(); err != nil {
+		return c.Status(500).SendString("Cursor error during MongoDB iteration: " + err.Error())
+	}
+
+	count, err := db.Con.CountDocuments(context.Background(), query)
+	if err != nil {
+		return c.Status(500).SendString("Failed to get user count from MongoDB: " + err.Error())
+	}
+
+	var code int
+	if count > 0 {
 		code = 1
 	}
+
 	jsonData := models.OutPut{
 		Code:  code,
-		Count: col,
+		Count: count,
 		Data:  users,
 	}
-	return c.JSON(jsonData)
 
+	return c.Status(200).JSON(jsonData)
 }
 
 // ---------------------------------------------------------------------
@@ -52,25 +71,32 @@ func Users(c *fiber.Ctx) error {
 //	INSERT USERS DATA - START
 //
 // ---------------------------------------------------------------------
-func CreateUsers(c *fiber.Ctx) error {
 
-	collection := db.Mg.Db.Collection("users")
+func CreateUsers(c *fiber.Ctx) error {
+	collection := db.Con
+	if collection == nil {
+		return c.Status(500).SendString("MongoDB collection is nil")
+	}
+
 	users := new(models.Users)
 	if err := c.BodyParser(users); err != nil {
 		return c.Status(404).SendString(err.Error())
 	}
 
 	users.ID = ""
+
 	insertionResult, err := collection.InsertOne(c.Context(), users)
 	if err != nil {
-		return c.Status(500).SendString(err.Error())
+		return c.Status(500).SendString("Failed to insert user into MongoDB: " + err.Error())
 	}
 
 	filter := bson.D{{Key: "_id", Value: insertionResult.InsertedID}}
 	createdRecord := collection.FindOne(c.Context(), filter)
 
 	createdUsers := &models.Users{}
-	createdRecord.Decode(createdUsers)
+	if err := createdRecord.Decode(createdUsers); err != nil {
+		return c.Status(500).SendString("Failed to decode created user from MongoDB: " + err.Error())
+	}
 
 	jsonData := models.OutPut{
 		Code:  1,
@@ -92,6 +118,11 @@ func CreateUsers(c *fiber.Ctx) error {
 //
 // ---------------------------------------------------------------------
 func UpdateUsers(c *fiber.Ctx) error {
+
+	if db.Con == nil {
+		return c.Status(500).SendString("MongoDB collection is nil")
+	}
+
 	idParam := c.Params("id")
 	usersId, err := primitive.ObjectIDFromHex(idParam)
 	if err != nil {
@@ -114,7 +145,7 @@ func UpdateUsers(c *fiber.Ctx) error {
 			},
 		},
 	}
-	err = db.Mg.Db.Collection("users").FindOneAndUpdate(c.Context(), query, update).Err()
+	err = db.Con.FindOneAndUpdate(c.Context(), query, update).Err()
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return c.SendStatus(404)
@@ -143,12 +174,17 @@ func UpdateUsers(c *fiber.Ctx) error {
 //
 // ---------------------------------------------------------------------
 func Delete(c *fiber.Ctx) error {
+
+	if db.Con == nil {
+		return c.Status(500).SendString("MongoDB collection is nil")
+	}
+
 	userId, err := primitive.ObjectIDFromHex(c.Params("id"))
 	if err != nil {
 		return c.SendStatus(404)
 	}
 	query := bson.D{{Key: "_id", Value: userId}}
-	result, err := db.Mg.Db.Collection("users").DeleteOne(c.Context(), &query)
+	result, err := db.Con.DeleteOne(c.Context(), &query)
 	if err != nil {
 		return c.SendStatus(500)
 	}

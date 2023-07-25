@@ -11,8 +11,8 @@ import (
 func main() {
 	app := fiber.New()
 
-	if err := db.Connect(); err != nil {
-		log.Fatal(err)
+	if db.Con == nil {
+		log.Fatal("MongoDB collection is nil")
 	}
 	// -------------------------------
 	// START ROUTING
