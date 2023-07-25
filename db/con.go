@@ -3,14 +3,16 @@ package db
 import (
 	"context"
 	"log"
+	"os"
 
+	_ "github.com/joho/godotenv/autoload"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const dbName = "andybrandproject"
-const MongoURI = "mongodb+srv://mritun:8011501382@mritundbcluster.tte3tkm.mongodb.net/"
-const Collection = "users"
+var dbName = os.Getenv("DBNAME")
+var MongoURI = os.Getenv("MONGODB_URI")
+var Collection = os.Getenv("COLLECTION")
 
 // Define a global variable to hold the MongoDB collection
 var Con *mongo.Collection

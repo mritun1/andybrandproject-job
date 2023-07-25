@@ -6,10 +6,16 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 )
 
 func main() {
 	app := fiber.New()
+
+	err_env := godotenv.Load()
+	if err_env != nil {
+		log.Fatal(".env not available")
+	}
 
 	if db.Con == nil {
 		log.Fatal("MongoDB collection is nil")
