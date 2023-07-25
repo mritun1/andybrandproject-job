@@ -8,11 +8,23 @@ Here we are using the Golang Fiber Framework with the MongoDB Atlas for the data
 1. First, Install Golang on your Server or PC.
 2. Then download the source code from our GitHub. https://github.com/mritun1/andybrandproject-job
 #### Connect with Database (MongoDB)
-1. Inside the project, open the file /db/connect.go and get Change the value variable MongoURI with your MongoDB URI. And change the value of variable dbName with your Database name.
+1. Inside the project, open the file /db/con.go and get Change the value variable MongoURI with your MongoDB URI. And change the value of variable dbName with your Database name.
 ```
-const dbName = "andybrandproject"
-const MongoURI = "mongodb+srv://user:password@cluster.tte3tkm.mongodb.net/" + dbName
+const dbName = "db_name"
+const MongoURI = "mongodb+srv://<user>:<password>@yourcluster.ske34.mongodb.net/"
+const Collection = "Coll_name"
 ```
+<br/>
+
+# Unit Testing
+
+For unit testing, we have a file named /controllers/users_test.go
+<br/>
+```
+$ cd controllers
+$ go test
+```
+
 <br/>
 
 # Usage
