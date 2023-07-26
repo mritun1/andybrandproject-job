@@ -13,6 +13,7 @@ Here we are using the Golang Fiber Framework with the MongoDB Atlas for the data
 DBNAME=your_db_name
 MONGODB_URI=your_mongodb_url
 COLLECTION=your_mongodb_collection
+SECRET_KEY=somekeyhere
 ```
 <br/>
 
