@@ -28,6 +28,7 @@ func main() {
 	app.Post("/users", controllers.CreateUsers)
 	app.Put("/users/:id", controllers.UpdateUsers)
 	app.Delete("/users/:id", controllers.Delete)
+	app.Post("/login", controllers.LoginUsers)
 	// -------------------------------
 	// END ROUTING
 	// -------------------------------

@@ -36,6 +36,7 @@ Here are some of the APIs that are available in the source code.
 2. POST: /users :- This call inserts new data into the collections.
 3. PUT: /users/:id :- This call update data into the collections.
 4. DELETE: /users/:id :- This call delete data from the collections.
+5. POST: /login :- This call is for user login.
 <br/>
 
 If you want to go more in depth about how to use the REST API, then please go through this link: https://documenter.getpostman.com/view/20669824/2s946mbqso 

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"andybrandproject/auth"
 	"andybrandproject/db"
 	"andybrandproject/models"
 	"context"
@@ -84,6 +85,9 @@ func CreateUsers(c *fiber.Ctx) error {
 	}
 
 	users.ID = ""
+	//CONVERT PASSWORD INTO HASH
+	pass, _ := auth.HashPassword(users.Password)
+	users.Password = pass
 
 	insertionResult, err := collection.InsertOne(c.Context(), users)
 	if err != nil {
@@ -132,6 +136,7 @@ func UpdateUsers(c *fiber.Ctx) error {
 	if err := c.BodyParser(users); err != nil {
 		return c.Status(404).SendString(err.Error())
 	}
+
 	query := bson.D{{Key: "_id", Value: usersId}}
 	update := bson.D{
 		{
@@ -141,7 +146,6 @@ func UpdateUsers(c *fiber.Ctx) error {
 				{Key: "dob", Value: users.Dob},
 				{Key: "address", Value: users.Address},
 				{Key: "description", Value: users.Description},
-				{Key: "createdAt", Value: users.CreatedAt},
 			},
 		},
 	}
@@ -202,5 +206,53 @@ func Delete(c *fiber.Ctx) error {
 // ---------------------------------------------------------------------
 //
 //	DELETE USERS DATA - END
+//
+// ---------------------------------------------------------------------
+// ---------------------------------------------------------------------
+//
+//	USER LOGIN - START
+//
+// ---------------------------------------------------------------------
+func LoginUsers(c *fiber.Ctx) error {
+	users := new(models.Users)
+	if err := c.BodyParser(users); err != nil {
+		return c.Status(404).SendString(err.Error())
+	}
+	code := 0
+	token := ""
+	//CHECK IF THE ACCOUNT EXISTS
+	filter := bson.M{"email": users.Email}
+	var user models.Users
+	err := db.Con.FindOne(context.Background(), filter).Decode(&user)
+	if err == nil {
+		if err != mongo.ErrNoDocuments {
+			//GET THE PASSWORD HASH AND VERIFY
+			verify := auth.VerifyPassword(user.Password, users.Password)
+			if verify {
+				code = 1
+				t, _ := auth.CreateKey(user.Email, user.ID)
+				token = t
+			}
+		}
+	}
+	d := models.Users{}
+	if code > 0 {
+		d = models.Users{
+			Email:    user.Email,
+			Password: user.Password,
+		}
+	}
+
+	jsonData := models.LogOutPut{
+		Code:  code,
+		Token: token,
+		Data:  d,
+	}
+	return c.Status(200).JSON(jsonData)
+}
+
+// ---------------------------------------------------------------------
+//
+//	USER LOGIN - END
 //
 // ---------------------------------------------------------------------

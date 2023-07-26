@@ -1,6 +1,8 @@
 package controllers
 
-import "github.com/gofiber/fiber/v2"
+import (
+	"github.com/gofiber/fiber/v2"
+)
 
 // ---------------------------------------------------------------------
 //
@@ -8,7 +10,10 @@ import "github.com/gofiber/fiber/v2"
 //
 // ---------------------------------------------------------------------
 func Home(c *fiber.Ctx) error {
-	return c.SendString("Hello! Everyone, \nWelcome to the Andy Brand Project.")
+
+	//token, _ := auth.CreateKey()
+
+	return c.SendString("Hello! Everyone, \nWelcome to the Andy Brand Project. ")
 }
 
 // ---------------------------------------------------------------------
